@@ -1,0 +1,35 @@
+{
+  "name": "oloo-observerevent_template",
+  "version": "1.0.0",
+  "description": "OLOO Observer Event Template",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest --watch All"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tforward/OLOO-ObserverEvent_Template.git"
+  },
+  "keywords": [
+    "OLOO",
+    "Observer",
+    "Event",
+    "Template"
+  ],
+  "author": "Tristan Forward",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/tforward/OLOO-ObserverEvent_Template/issues"
+  },
+  "homepage": "https://github.com/tforward/OLOO-ObserverEvent_Template#readme",
+  "dependencies": {
+    "npm": "^5.8.0"
+  },
+  "devDependencies": {
+    "eslint": "^4.19.1",
+    "eslint-config-airbnb-base": "^12.1.0",
+    "eslint-plugin-import": "^2.11.0",
+    "browser-sync": "^2.23.6",
+    "jest": "^22.4.3"
+  }
+}
