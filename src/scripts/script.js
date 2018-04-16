@@ -45,10 +45,13 @@ myApp.initApplication = function init() {
 function alertMe(x) {
   const testX = x;
   // walert("HELLO");
+  console.log("finally!!!!");
   return testX;
 }
 
+// removeIf(production)
 module.exports = alertMe;
+// endRemoveIf(production)
 
 function defineEvents() {
   // Event Types:
