@@ -45,7 +45,7 @@ myApp.initApplication = function init() {
 function alertMe(x) {
   const testX = x;
   // walert("HELLO");
-  console.log("finally!!!!");
+  console.log("finally!!!f!");
   return testX;
 }
 

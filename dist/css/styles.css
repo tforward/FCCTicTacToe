@@ -1,0 +1,40 @@
+/* CSS */
+
+html {
+    box-sizing: border-box;
+  }
+  *, *:before, *:after {
+    box-sizing: inherit;
+  }
+
+.board {
+    width: 24em;
+    height: 24em;
+    background-color: white;
+}
+
+.row {
+    display: flex;
+    flex-flow: row;
+}
+
+.space {
+    background-color: black;
+    flex: 1 1 auto;
+    height: 8em;
+    width: 8em;
+    border: 0.3em solid white;
+    border-radius: 22px;
+    color: white;
+}
+
+/* KEEP THESE LAST */
+.center {
+    display: flex;
+    justify-content: center; /* center items horizontally, in this case */
+    align-items: center;
+}
+
+
+
+

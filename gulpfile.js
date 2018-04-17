@@ -2,8 +2,6 @@ const gulp = require("gulp");
 const removeCode = require("gulp-remove-code");
 const browserSync = require("browser-sync").create();
 
-const reload = browserSync.reload;
-
 // Start browserSync
 gulp.task("browser-sync", () => {
   browserSync.init();
@@ -21,6 +19,7 @@ gulp.task("browser-sync", () => {
 
 gulp.task("build", () => {
   gulp.src("src/*.html").pipe(gulp.dest("dist"));
+  gulp.src("src/css/*.css").pipe(gulp.dest("dist/css"));
   gulp
     .src("src/scripts/script.js")
     .pipe(removeCode({ production: true }))
@@ -41,5 +40,6 @@ gulp.task("default", ["build"], () => {
       baseDir: "dist"
     }
   });
-  gulp.watch(["src/**/*.js", "src/*.html"], ["build-watch"]);
+  // Watch for changes of HTML, CSS and JS run build-watch
+  gulp.watch(["src/scripts/*.js", "src/*.html", "src/css/*.css"], ["build-watch"]);
 });
