@@ -20,11 +20,11 @@ myApp.main = function main() {
   myApp.subscribers = EventObservers();
   myApp.subscribers.init();
 
-  const action1 = document.getElementById("clicks1");
-  btnEventObserver("btn1", action1, myApp.subscribers);
+  // const action1 = document.getElementById("clicks1");
+  // btnEventObserver("btn1", action1, myApp.subscribers);
 
-  const action2 = document.getElementById("clicks2");
-  btnEventObserver("btn2", action2, myApp.subscribers);
+  // const action2 = document.getElementById("clicks2");
+  // btnEventObserver("btn2", action2, myApp.subscribers);
 
   // console.log(myApp.subscribers);
 
@@ -37,6 +37,60 @@ myApp.main = function main() {
 myApp.initApplication = function init() {
   myApp.main();
 };
+
+// ======================================================================
+// Tic Tac Toe
+// ======================================================================
+
+// "-1" equals empty space
+const newBoard = [["X", "X", "X"], ["O", "O", "O"], [7, 8, 9]];
+
+// console.log(board.length);
+
+// win row =  (000), (111), (222) in 1st position
+// win diangle = (00, 11, 22), (02, 11, 20)
+
+// win row = (00, 10, 20) (01, 11, 21), (02, 12, 22)
+// win column = (0, 1, 2) (0, 1, 2), (2, 2, 2) in the 2nd position
+
+function getBoardState(board) {
+  const xPos = [];
+  const oPos = [];
+  const nullPos = [];
+
+  for (let id = 0; id < board.length; id += 1) {
+    const row = board[id];
+    for (let space = 0; space < row.length; space += 1) {
+      if (row[space] === "X") {
+        xPos.push([id, space]);
+      } else if (row[space] === "O") {
+        oPos.push([id, space]);
+      } else {
+        nullPos.push([id, space]);
+      }
+    }
+  }
+  return [xPos, oPos, nullPos];
+}
+
+// TODO HERE Define the Win Conditions see above
+
+function checkWin(state) {
+  state.forEach(element => {
+    //
+
+    console.log(element[0]);
+  });
+
+  console.log(state);
+}
+
+const state = getBoardState(newBoard);
+const xState = state[0];
+const oState = state[1];
+const nullState = state[2];
+
+checkWin(xState);
 
 // ======================================================================
 // Event Actions
