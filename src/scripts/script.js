@@ -43,15 +43,7 @@ myApp.initApplication = function init() {
 // ======================================================================
 
 // "-1" equals empty space
-const newBoard = [["X", "X", "X"], ["O", "O", "O"], [7, 8, 9]];
-
-// console.log(board.length);
-
-// win row =  (000), (111), (222) in 1st position
-// win diangle = (00, 11, 22), (02, 11, 20)
-
-// win row = (00, 10, 20) (01, 11, 21), (02, 12, 22)
-// win column = (0, 1, 2) (0, 1, 2), (2, 2, 2) in the 2nd position
+const newBoard = [["X", "X", "X"], ["o", "o", "o"], ["o", "o", "o"]];
 
 function getBoardState(board) {
   const xPos = [];
@@ -73,24 +65,32 @@ function getBoardState(board) {
   return [xPos, oPos, nullPos];
 }
 
-// TODO HERE Define the Win Conditions see above
-
-function checkWin(state) {
-  state.forEach(element => {
-    //
-
-    console.log(element[0]);
+function isWin(state) {
+  // Sum >= 15 equals win
+  const magicSquare = [[8, 1, 6], [3, 5, 7], [4, 9, 2]];
+  let score = 0;
+  state.forEach(elem => {
+    score += magicSquare[elem[0]][elem[1]];
   });
 
-  console.log(state);
+  if (score >= 15) {
+    return true;
+  }
+  return false;
 }
 
 const state = getBoardState(newBoard);
-const xState = state[0];
-const oState = state[1];
+const player1 = state[0];
+const player2 = state[1];
 const nullState = state[2];
 
-checkWin(xState);
+const player1Wins = isWin(player1);
+const player2Wins = isWin(player2);
+
+console.log(player1Wins);
+console.log(player2Wins);
+
+// MIN MAX ALG
 
 // ======================================================================
 // Event Actions
