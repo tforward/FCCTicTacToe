@@ -16,15 +16,21 @@ myApp.main = function main() {
   // const eventSandbox1 = document.getElementById("eventSandbox1");
   // eventSandbox.initEvent(eventSandbox1, "click");
 
-  const newBoard = [["na", "na", "na"], ["X", "X", "na"], ["na", "na", "na"]];
+  // [“O”,1 ,”X”,”X”,4 ,”X”, 6 ,”O”,”O”];
+  const newBoard = [["O", "na", "X"], ["X", "X", "na"], ["na", "O", "O"]];
 
-  myApp.player1 = "X";
-  myApp.ai = getAiLetter("X");
+  myApp.player1 = "O";
+  myApp.ai = getAiLetter(myApp.player1);
 
   const board = newBoard;
   myApp.moves = [];
+  myApp.count = 0;
 
-  game(board, myApp.player1);
+  const bestMove = game(board, myApp.player1);
+
+  console.log(bestMove);
+
+  console.log(myApp.count);
 
   // Create a event Observer
   // myApp.subscribers = EventObservers();
@@ -119,6 +125,7 @@ function checkWinType(states) {
 
 function game(newBoard, player) {
   const board = newBoard;
+
   // console.log(board);
   const state = getBoardState(board);
 
@@ -128,7 +135,6 @@ function game(newBoard, player) {
   if (score !== undefined) {
     return score;
   }
-
   const move = {};
 
   state[2].forEach(pos => {
@@ -148,7 +154,7 @@ function game(newBoard, player) {
     myApp.moves.push([move]);
   });
   const bestMove = getBestMove(myApp.moves, player);
-  console.log(bestMove);
+  return bestMove;
 }
 
 function getBestMove(moves, player) {
