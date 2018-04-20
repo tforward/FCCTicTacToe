@@ -43,7 +43,7 @@ myApp.initApplication = function init() {
 // ======================================================================
 
 // "-1" equals empty space
-const newBoard = [["X", "X", "X"], ["o", "o", "o"], ["o", "o", "o"]];
+const newBoard = [["X", "X", "X"], ["o", "O", "o"], ["l", "o", "X"]];
 
 function getBoardState(board) {
   const xPos = [];
@@ -65,18 +65,55 @@ function getBoardState(board) {
   return [xPos, oPos, nullPos];
 }
 
-function isWin(state) {
-  // Sum >= 15 equals win
-  const magicSquare = [[8, 1, 6], [3, 5, 7], [4, 9, 2]];
-  let score = 0;
-  state.forEach(elem => {
-    score += magicSquare[elem[0]][elem[1]];
-  });
-
-  if (score >= 15) {
-    return true;
+function diagonalWin(diagonals) {
+  const middleExists = diagonals.indexOf("11") !== -1;
+  if (middleExists) {
+    if (diagonals.indexOf("00") !== -1 && diagonals.indexOf("22")) {
+      return true;
+    } else if (diagonals.indexOf("20") !== -1 && diagonals.indexOf("02")) {
+      return true;
+    }
   }
   return false;
+}
+
+function isWin(dict) {
+  for (let i = 0; i < 3; i += 1) {
+    if (dict[i] !== undefined) {
+      if (dict[i].length === 3) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+function checkWinType(states) {
+  const rowWin = isWin(states[0]);
+  const colWin = isWin(states[1]);
+  const dwin = diagonalWin(states[2]);
+
+  if (rowWin === true) {
+    return "rowWin";
+  } else if (colWin === true) {
+    return "colWin";
+  } else if (dwin === true) {
+    return "diaWin";
+  }
+  return false;
+}
+
+function filterState(state) {
+  let rows = Object.create(null);
+  let cols = Object.create(null);
+  const diagonals = [];
+
+  state.forEach(elem => {
+    rows = defaultDict(rows, elem[0], [elem[0], elem[1]]);
+    cols = defaultDict(cols, elem[1], [elem[0], elem[1]]);
+    diagonals.push(`${elem[0]}${elem[1]}`);
+  });
+  return checkWinType([rows, cols, diagonals]);
 }
 
 const state = getBoardState(newBoard);
@@ -84,13 +121,31 @@ const player1 = state[0];
 const player2 = state[1];
 const nullState = state[2];
 
-const player1Wins = isWin(player1);
-const player2Wins = isWin(player2);
+const player1Wins = filterState(player1);
+const player2Wins = filterState(player2);
 
 console.log(player1Wins);
 console.log(player2Wins);
 
-// MIN MAX ALG
+// if (nullState === 0){
+//  tie game
+// }
+
+// TODO HERE MIN MAX ALG
+
+// ======================================================================
+// Utilities
+// ======================================================================
+
+function defaultDict(inputDict, i, values) {
+  const dict = inputDict;
+  if (dict[i] === undefined) {
+    dict[i] = [values];
+  } else {
+    dict[i].push(values);
+  }
+  return dict;
+}
 
 // ======================================================================
 // Event Actions
