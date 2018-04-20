@@ -11,14 +11,24 @@ const myApp = Object.create(null);
 myApp.main = function main() {
   // Creates an isolated event sandbox around a element
   // Any elements insdie the Event sandbox will be passed to the EventDelegator
-  const eventSandbox = EventDelegator();
+  // const eventSandbox = EventDelegator();
 
-  const eventSandbox1 = document.getElementById("eventSandbox1");
-  eventSandbox.initEvent(eventSandbox1, "click");
+  // const eventSandbox1 = document.getElementById("eventSandbox1");
+  // eventSandbox.initEvent(eventSandbox1, "click");
+
+  const newBoard = [["na", "na", "na"], ["X", "X", "na"], ["na", "na", "na"]];
+
+  myApp.player1 = "X";
+  myApp.ai = getAiLetter("X");
+
+  const board = newBoard;
+  myApp.moves = [];
+
+  game(board, myApp.player1);
 
   // Create a event Observer
-  myApp.subscribers = EventObservers();
-  myApp.subscribers.init();
+  // myApp.subscribers = EventObservers();
+  // myApp.subscribers.init();
 
   // const action1 = document.getElementById("clicks1");
   // btnEventObserver("btn1", action1, myApp.subscribers);
@@ -28,10 +38,10 @@ myApp.main = function main() {
 
   // console.log(myApp.subscribers);
 
-  defineEvents();
+  // defineEvents();
 
   // Handles all events within the Event sandbox
-  eventSandbox.addEvent(eventController);
+  // eventSandbox.addEvent(eventController);
 };
 
 myApp.initApplication = function init() {
@@ -42,8 +52,12 @@ myApp.initApplication = function init() {
 // Tic Tac Toe
 // ======================================================================
 
-// "-1" equals empty space
-const newBoard = [["X", "X", "X"], ["o", "O", "o"], ["l", "o", "X"]];
+function getAiLetter(input) {
+  if (input === "X") {
+    return "O";
+  }
+  return "X";
+}
 
 function getBoardState(board) {
   const xPos = [];
@@ -77,7 +91,7 @@ function diagonalWin(diagonals) {
   return false;
 }
 
-function isWin(dict) {
+function checkWin(dict) {
   for (let i = 0; i < 3; i += 1) {
     if (dict[i] !== undefined) {
       if (dict[i].length === 3) {
@@ -89,21 +103,88 @@ function isWin(dict) {
 }
 
 function checkWinType(states) {
-  const rowWin = isWin(states[0]);
-  const colWin = isWin(states[1]);
+  const rowWin = checkWin(states[0]);
+  const colWin = checkWin(states[1]);
   const dwin = diagonalWin(states[2]);
 
   if (rowWin === true) {
-    return "rowWin";
+    return [true, "rowWin"];
   } else if (colWin === true) {
-    return "colWin";
+    return [true, "colWin"];
   } else if (dwin === true) {
-    return "diaWin";
+    return [true, "diaWin"];
   }
-  return false;
+  return [false];
 }
 
-function filterState(state) {
+function game(newBoard, player) {
+  const board = newBoard;
+  // console.log(board);
+  const state = getBoardState(board);
+
+  const score = minMaxState(isWin(state[0]), isWin(state[1]), state[2]);
+
+  // Short-circuit the funtion
+  if (score !== undefined) {
+    return score;
+  }
+
+  const move = {};
+
+  state[2].forEach(pos => {
+    move.index = [pos[0], pos[1]];
+    const reset = board[pos[0]][pos[1]];
+    board[pos[0]][pos[1]] = player;
+
+    if (player === myApp.ai) {
+      const result = game(board, myApp.player1);
+      move.score = result.score;
+    } else {
+      const result = game(board, myApp.ai);
+      move.score = result.score;
+    }
+
+    board[pos[0]][pos[1]] = reset;
+    myApp.moves.push([move]);
+  });
+  const bestMove = getBestMove(myApp.moves, player);
+  console.log(bestMove);
+}
+
+function getBestMove(moves, player) {
+  let bestScore = -10000;
+  let bestMove = null;
+  if (player === myApp.player1) {
+    moves.forEach(move => {
+      if (move[0].score > bestScore) {
+        bestScore = move[0].score;
+        bestMove = move[0].index;
+      }
+    });
+  } else {
+    bestScore = 10000;
+    moves.forEach(move => {
+      if (move[0].score < bestScore) {
+        bestScore = move[0].score;
+        bestMove = move[0].index;
+      }
+    });
+  }
+  return bestMove;
+}
+
+function minMaxState(player1Wins, player2Wins, nullState) {
+  if (player1Wins[0]) {
+    return { score: -10 };
+  } else if (player2Wins[0]) {
+    return { score: 10 };
+  } else if (nullState.length === 0) {
+    return { score: 0 };
+  }
+  return undefined;
+}
+
+function isWin(state) {
   let rows = Object.create(null);
   let cols = Object.create(null);
   const diagonals = [];
@@ -115,23 +196,6 @@ function filterState(state) {
   });
   return checkWinType([rows, cols, diagonals]);
 }
-
-const state = getBoardState(newBoard);
-const player1 = state[0];
-const player2 = state[1];
-const nullState = state[2];
-
-const player1Wins = filterState(player1);
-const player2Wins = filterState(player2);
-
-console.log(player1Wins);
-console.log(player2Wins);
-
-// if (nullState === 0){
-//  tie game
-// }
-
-// TODO HERE MIN MAX ALG
 
 // ======================================================================
 // Utilities
