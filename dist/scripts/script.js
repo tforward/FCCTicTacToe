@@ -39,9 +39,8 @@ function newGame() {
 
   // const bestMove = game(board, myApp.player1);
 
-  // const action1 = document.getElementById("clicks1");
+  // console.log(bestMove);
 
-  // const action2 = document.getElementById("clicks2");
   // console.log(myApp.count);
 }
 
