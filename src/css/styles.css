@@ -12,6 +12,31 @@ html {
     height: 24em;
     background-color: white;
 }
+.option {
+    height: 9em;
+    width: 9em;
+    border: 0.3em solid white;
+    border-radius: 22px;
+    color: white;
+    transition: 0.3s ease-in;
+    cursor: pointer;
+    outline: none;
+}
+
+.option:hover{
+    height: 10em;
+    width: 10em;
+    transition: 0.3s ease-in;
+}
+
+#pickX{
+    background-color: #FFA145;
+
+}
+
+#pickO{
+    background-color: #A8D37C;
+}
 
 .row {
     display: flex;
@@ -21,11 +46,13 @@ html {
 .space {
     background-color: black;
     flex: 1 1 auto;
-    height: 8em;
-    width: 8em;
+    height: 9em;
+    width: 9em;
     border: 0.3em solid white;
     border-radius: 22px;
     color: white;
+    cursor: pointer;
+    outline: none;
 }
 
 /* KEEP THESE LAST */

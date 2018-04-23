@@ -11,44 +11,38 @@ const myApp = Object.create(null);
 myApp.main = function main() {
   // Creates an isolated event sandbox around a element
   // Any elements insdie the Event sandbox will be passed to the EventDelegator
-  // const eventSandbox = EventDelegator();
+  const eventSandbox = EventDelegator();
 
-  // const eventSandbox1 = document.getElementById("eventSandbox1");
-  // eventSandbox.initEvent(eventSandbox1, "click");
+  const eventSandbox1 = document.getElementById("eventSandbox1");
+  eventSandbox.initEvent(eventSandbox1, "click", { tags: ["BUTTON"] });
 
+  // Create a event Observer
+  myApp.subscribers = EventObservers();
+  myApp.subscribers.init();
+
+  createObserversById(["s1", "s2", "s3", "s4", "s5", "s6", "s7", "s8", "s9", "pickX", "pickO"]);
+
+  // Handles all events within the Event sandbox
+  eventSandbox.addEvent(eventController);
+};
+
+function newGame() {
   // [“O”,1 ,”X”,”X”,4 ,”X”, 6 ,”O”,”O”];
-  const newBoard = [["O", "na", "X"], ["X", "X", "na"], ["na", "O", "O"]];
-
-  myApp.player1 = "O";
+  const newBoard = [["na", "na", "na"], ["na", "na", "na"], ["na", "na", "na"]];
   myApp.ai = getAiLetter(myApp.player1);
 
   const board = newBoard;
   myApp.moves = [];
   myApp.count = 0;
 
-  const bestMove = game(board, myApp.player1);
+  // IM HERE SETTING THE TURN and waiting for player to enter value
 
-  console.log(bestMove);
+  // const bestMove = game(board, myApp.player1);
 
-  console.log(myApp.count);
+  // console.log(bestMove);
 
-  // Create a event Observer
-  // myApp.subscribers = EventObservers();
-  // myApp.subscribers.init();
-
-  // const action1 = document.getElementById("clicks1");
-  // btnEventObserver("btn1", action1, myApp.subscribers);
-
-  // const action2 = document.getElementById("clicks2");
-  // btnEventObserver("btn2", action2, myApp.subscribers);
-
-  // console.log(myApp.subscribers);
-
-  // defineEvents();
-
-  // Handles all events within the Event sandbox
-  // eventSandbox.addEvent(eventController);
-};
+  // console.log(myApp.count);
+}
 
 myApp.initApplication = function init() {
   myApp.main();
@@ -218,30 +212,19 @@ function defaultDict(inputDict, i, values) {
 }
 
 // ======================================================================
-// Event Actions
+// Events
 // ======================================================================
-
-function alertMe(x) {
-  const testX = x;
-  // walert("HELLO");
-  console.log("finally!!!f!");
-  return testX;
+function selectChoice(id) {
+  const obs = myApp.subscribers.observers[id];
+  myApp.player1 = obs.elem.firstElementChild.textContent;
+  newGame();
 }
 
-// removeIf(production)
-module.exports = alertMe;
-// endRemoveIf(production)
-
-function defineEvents() {
-  // Event Types:
-  // Broadcast: Sends to all observers
-  // Inform: Sends to only one observer, but can still share informaition within the class
-  // Func: Independent function call
-  myApp.events = Object.create(null);
-  myApp.events["btnClear"] = { type: "broadcast", action: "clear" };
-  myApp.events["btn1"] = { type: "inform", action: "add" };
-  myApp.events["btn2"] = { type: "inform", action: "add" };
-  myApp.events["btnAlert"] = { type: "func", action: alertMe };
+function createObserversById(ids) {
+  ids.forEach(_id => {
+    const elem1 = document.getElementById(_id);
+    btnEventObserver(_id, elem1, myApp.subscribers);
+  });
 }
 
 // ======================================================================
@@ -254,18 +237,16 @@ function eventController(args, e) {
   // it's children.
   // To know what button was pressed just use console.log(id).
   // let {arg1, arg2, arg3} = args;
+  // args: comes from when the event was first init. It's not to be defined directly
+  //      ex: NOT LIKE eventController(args) "THIS WON'T WORK"
 
   // Only Passes events of with tagNames defined in the array
-  const id = getTargetId(e, ["BUTTON"]);
-  const currentEvent = myApp.events[id];
+  const id = getTargetId(e, args.tags);
 
-  if (currentEvent["type"] === "broadcast") {
-    myApp.subscribers.broadcast(currentEvent["action"]);
-  } else if (currentEvent["type"] === "inform") {
-    const action = myApp.subscribers.observers[id];
-    myApp.subscribers.inform(action.id, "", currentEvent["action"]);
-  } else if (currentEvent["type"] === "func") {
-    myApp.events[id].action();
+  if (id) {
+    if (id.match(/(pickX|pickO)/)) {
+      selectChoice(id);
+    }
   }
 
   // Stop the event from going further up the DOM
@@ -273,34 +254,34 @@ function eventController(args, e) {
 }
 
 function btnEventDelegator() {
+  // Here you can define properties that will be shared between all defined within
+  // the subscription
+  // These can be accessed via the subscriptions or
+  // directly by calling myApp.subscribers.observers[id]
+  // which you can use dot notation on any property or method
   const Observer = {
     init(btnId, elem) {
       this.id = btnId;
       this.elem = elem;
       this.actionId = elem.id;
-    },
-    props() {
       this.count = 0;
     },
+    newProp(propName) {
+      if (this[propName] === undefined) {
+        this[propName] = Object.create(null);
+      }
+    },
     add(num, data) {
-      this.count += 1;
+      this.count += num;
       this.elem.textContent = this.count;
       this.data = data;
     },
     clear() {
-      this.elem.textContent = 0;
+      this.elem.textContent = "";
       this.count = 0;
     }
   };
   return Observer;
-}
-
-function btnEventObserver(btnId, elem, observers) {
-  const observer = btnEventDelegator();
-  observer.init(btnId, elem);
-  observer.props();
-  observers.subscribe(observer);
-  return observer;
 }
 
 // ======================================================================
@@ -340,8 +321,8 @@ function createEvent() {
 function EventDelegator() {
   const Event = Object.create(createEvent());
 
-  Event.initEvent = function setup(elem, type, args) {
-    this.setup(elem, type, args);
+  Event.initEvent = function setup(elem, type, targetTags) {
+    this.setup(elem, type, targetTags);
   };
   Event.addEvent = function add(func, options) {
     this.addListener(func, options);
@@ -361,7 +342,15 @@ function getTargetId(e, tags) {
     }
   }
   e.stopPropagation();
-  return null;
+  return false;
+}
+
+function btnEventObserver(btnId, elem, observers) {
+  // We just return true, because the observers holds the object
+  const observer = btnEventDelegator();
+  observer.init(btnId, elem);
+  observers.subscribe(observer);
+  return true;
 }
 
 function EventObservers() {
@@ -380,9 +369,9 @@ function EventObservers() {
       this.observers.splice(i, 1);
     }
   };
-  Event.inform = function inform(id, data, func) {
+  Event.inform = function inform(id, func, args) {
     // Sent to only one observer
-    this.observers[id][func](id, data);
+    this.observers[id][func](id, args);
   };
   Event.broadcast = function broadcast(func) {
     // On each object called func
@@ -393,7 +382,6 @@ function EventObservers() {
   };
   return Event;
 }
-
 // ======================================================================
 
 // Handler when the DOM is fully loaded
