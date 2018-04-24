@@ -26,14 +26,15 @@ myApp.main = function main() {
   eventSandbox.addEvent(eventController);
 };
 
-function newGame() {
+function initGame() {
   // [“O”,1 ,”X”,”X”,4 ,”X”, 6 ,”O”,”O”];
   const newBoard = [["na", "na", "na"], ["na", "na", "na"], ["na", "na", "na"]];
-  myApp.ai = getAiLetter(myApp.player1);
 
   const board = newBoard;
   myApp.moves = [];
   myApp.count = 0;
+
+  console.log("new");
 
   // IM HERE SETTING THE TURN and waiting for player to enter value
 
@@ -49,8 +50,57 @@ myApp.initApplication = function init() {
 };
 
 // ======================================================================
+// Events
+// ======================================================================
+function selectChoice(id) {
+  const obs = myApp.subscribers.observers[id];
+  myApp.player1 = obs.elem.firstElementChild.textContent;
+  myApp.ai = getAiLetter(myApp.player1);
+  scoreBoard();
+  setVisiblity();
+  initGame();
+}
+
+function createObserversById(ids) {
+  ids.forEach(_id => {
+    const elem1 = document.getElementById(_id);
+    btnEventObserver(_id, elem1, myApp.subscribers);
+  });
+}
+
+// ======================================================================
 // Tic Tac Toe
 // ======================================================================
+
+function scoreBoard() {
+  const scoreFrame = document.getElementById("scoreFrame");
+  const playerSBoard = document.getElementById("playerScoreB");
+  const aiSBoard = document.getElementById("aiScoreB");
+  const playerTitle = document.getElementById("playerTitle");
+  const aiTitle = document.getElementById("aiTitle");
+
+  if (myApp.player1 === "X") {
+    playerSBoard.className = "X scoreBoard";
+    aiSBoard.className = "O scoreBoard";
+    playerTitle.textContent = "Player: 'X'";
+    aiTitle.textContent = "AI: 'O'";
+  } else {
+    playerSBoard.className = "O scoreBoard";
+    aiSBoard.className = "X scoreBoard";
+    playerTitle.textContent = "Player: 'O'";
+    aiTitle.textContent = "AI: 'X'";
+  }
+  scoreFrame.className = "visible";
+}
+
+function setVisiblity() {
+  const frame = document.getElementById("frame");
+  const board = document.getElementById("board");
+  const menu = document.getElementById("menu");
+  frame.className = "visible";
+  board.className = "visible";
+  menu.className = "notVisible";
+}
 
 function getAiLetter(input) {
   if (input === "X") {
@@ -209,22 +259,6 @@ function defaultDict(inputDict, i, values) {
     dict[i].push(values);
   }
   return dict;
-}
-
-// ======================================================================
-// Events
-// ======================================================================
-function selectChoice(id) {
-  const obs = myApp.subscribers.observers[id];
-  myApp.player1 = obs.elem.firstElementChild.textContent;
-  newGame();
-}
-
-function createObserversById(ids) {
-  ids.forEach(_id => {
-    const elem1 = document.getElementById(_id);
-    btnEventObserver(_id, elem1, myApp.subscribers);
-  });
 }
 
 // ======================================================================

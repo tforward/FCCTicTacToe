@@ -13,32 +13,47 @@
     <div id="eventSandbox1">
       <h1 class="center">Tic Tac Toe</h1>
       <div class="center">
-
-        <div class="board">
-          <div class="row">
-            <button id="s1" class="space center"></button>
-            <button id="s2" class="space center"></button>
-            <button id="s3" class="space center"></button>
-          </div>
-          <div class="row">
-            <button id="s4" class="space center"></button>
-            <button id="s5" class="space center"></button>
-            <button id="s6" class="space center"></button>
-          </div>
-          <div class="row">
-            <button id="s7" class="space center"></button>
-            <button id="s8" class="space center"></button>
-            <button id="s9" class="space center"></button>
+        <div id="frame" class="notVisible">
+          <div id="board" class="notVisible">
+            <div class="row" class="notVisible">
+              <button id="s1" class="space center"></button>
+              <button id="s2" class="space center"></button>
+              <button id="s3" class="space center"></button>
+            </div>
+            <div class="row">
+              <button id="s4" class="space center"></button>
+              <button id="s5" class="space center"></button>
+              <button id="s6" class="space center"></button>
+            </div>
+            <div class="row">
+              <button id="s7" class="space center"></button>
+              <button id="s8" class="space center"></button>
+              <button id="s9" class="space center"></button>
+            </div>
           </div>
         </div>
       </div>
-      <div class="center">
-        <button id="pickX" class="option center">
-          <p>X</p>
-        </button>
-        <button id="pickO" class="option center">
-          <p>O</p>
-        </button>
+      <div id="menu" class="">
+        <h2 id="title" class="center">Select X or O</h2>
+        <div class="center">
+          <button id="pickX" class="X option center">
+            <p>X</p>
+          </button>
+          <button id="pickO" class="O option center">
+            <p>O</p>
+          </button>
+        </div>
+      </div>
+      <div id="scoreFrame" class="notVisible">
+        <h2 id="title" class="center">Score</h2>
+        <div class="center">
+          <div id="playerScoreB" class="scoreBoard">
+            <h3 id="playerTitle" class="center">Player: </h3>
+          </div>
+          <div id="aiScoreB" class="scoreBoard">
+            <h3 id="aiTitle" class="center">AI: </h3>
+          </div>
+        </div>
       </div>
     </div>
     <script type="text/javascript" src="scripts/script.js"></script>
