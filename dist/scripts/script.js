@@ -78,6 +78,12 @@ function scoreBoard() {
   const aiSBoard = document.getElementById("aiScoreB");
   const playerTitle = document.getElementById("playerTitle");
   const aiTitle = document.getElementById("aiTitle");
+  const spaces = document.querySelectorAll(".spaceStart");
+
+  for (let i = 0; i < spaces.length; i += 1) {
+    spaces[i].className = "space center";
+    console.log(spaces[i]);
+  }
 
   if (myApp.player1 === "X") {
     playerSBoard.className = "X scoreBoard";
@@ -88,6 +94,7 @@ function scoreBoard() {
     playerSBoard.className = "O scoreBoard";
     aiSBoard.className = "X scoreBoard";
     playerTitle.textContent = "Player: 'O'";
+    playerTitle.className = "center visible";
     aiTitle.textContent = "AI: 'X'";
   }
   scoreFrame.className = "visible";
