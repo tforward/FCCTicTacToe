@@ -11,7 +11,7 @@
 <body>
   <div>
     <div id="eventSandbox1">
-      <h1 class="center">Tic Tac Toe</h1>
+      <h1 id="mainTitle" class="center">Tic Tac Toe</h1>
       <div class="center">
         <div id="frame" class="">
           <div id="board" class="">
@@ -43,14 +43,26 @@
           </button>
         </div>
       </div>
-      <div id="scoreFrame" class="hidden">
-        <h2 id="title" class="center">Score</h2>
+      <div id="scoreFrame" class="">
+        <h2 id="scoreTitle" class="center">Score</h2>
         <div class="center">
-          <div id="playerScoreB" class="scoreBoard hiddenBoard">
+          <div id="playerScoreB" class="scoreBoard ">
             <h3 id="playerTitle" class="center">Player: </h3>
+            <div class="center">
+              <div>
+                <h3 id="playerWins">Wins: </h3>
+                <h3 id="playerLosses">Losses: </h3>
+              </div>
+            </div>
           </div>
-          <div id="aiScoreB" class="scoreBoard hiddenBoard">
+          <div id="aiScoreB" class="scoreBoard">
             <h3 id="aiTitle" class="center">AI: </h3>
+            <div class="center">
+              <div>
+                <h3 id="aiWins">Wins: </h3>
+                <h3 id="aiLosses">Losses: </h3>
+              </div>
+            </div>
           </div>
         </div>
       </div>

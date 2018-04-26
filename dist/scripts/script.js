@@ -22,9 +22,22 @@ myApp.main = function main() {
 
   createObserversById(["s1", "s2", "s3", "s4", "s5", "s6", "s7", "s8", "s9", "pickX", "pickO"]);
 
+  // Elements with no Events on them
+  myApp.Elems = EventObservers();
+  myApp.Elems.init();
+
+  elementObjectById(
+    ["mainTitle", "scoreTitle", "scoreFrame", "playerScoreB", "aiScoreB", "playerTitle", "aiTitle"],
+    myApp.Elems
+  );
+
   // Handles all events within the Event sandbox
   eventSandbox.addEvent(eventController);
 };
+
+// ======================================================================
+// Events
+// ======================================================================
 
 function initGame() {
   // [“O”,1 ,”X”,”X”,4 ,”X”, 6 ,”O”,”O”];
@@ -73,31 +86,30 @@ function createObserversById(ids) {
 // ======================================================================
 
 function scoreBoard() {
-  const scoreFrame = document.getElementById("scoreFrame");
-  const playerSBoard = document.getElementById("playerScoreB");
-  const aiSBoard = document.getElementById("aiScoreB");
-  const playerTitle = document.getElementById("playerTitle");
-  const aiTitle = document.getElementById("aiTitle");
   const spaces = document.querySelectorAll(".spaceStart");
+
+  const elems = myApp.Elems.observers;
+
+  elems.scoreTitle.elem.className = "center fadeIn";
+  elems.scoreFrame.elem.className = "visible";
 
   for (let i = 0; i < spaces.length; i += 1) {
     spaces[i].className = "space center";
-    console.log(spaces[i]);
   }
 
   if (myApp.player1 === "X") {
-    playerSBoard.className = "X scoreBoard";
-    aiSBoard.className = "O scoreBoard";
-    playerTitle.textContent = "Player: 'X'";
-    aiTitle.textContent = "AI: 'O'";
+    elems.playerScoreB.elem.className = "X scoreBoard";
+    elems.aiScoreB.elem.className = "O scoreBoard";
+    elems.playerTitle.elem.textContent = "Player: 'X'";
+    elems.aiTitle.elem.textContent = "AI: 'O'";
   } else {
-    playerSBoard.className = "O scoreBoard";
-    aiSBoard.className = "X scoreBoard";
-    playerTitle.textContent = "Player: 'O'";
-    playerTitle.className = "center visible";
-    aiTitle.textContent = "AI: 'X'";
+    elems.playerScoreB.elem.className = "O scoreBoard";
+    elems.aiScoreB.elem.className = "X scoreBoard";
+    elems.playerTitle.elem.textContent = "Player: 'O'";
+    elems.aiTitle.elem.textContent = "AI: 'X'";
   }
-  scoreFrame.className = "visible";
+  elems.playerTitle.elem.className = "center visible fadeIn";
+  elems.aiTitle.elem.className = "center visible fadeIn";
 }
 
 function setVisiblity() {
@@ -269,6 +281,38 @@ function defaultDict(inputDict, i, values) {
 }
 
 // ======================================================================
+// Element Controller
+// ======================================================================
+
+function elementDelegator() {
+  // These can be accessed via the subscriptions or
+  // directly by calling myApp.subscribers.observers[id]
+  // which you can use dot notation on any property or method
+  const Element = {
+    init(btnId, elem) {
+      this.id = btnId;
+      this.elem = elem;
+    },
+    newProp(propName) {
+      if (this[propName] === undefined) {
+        this[propName] = Object.create(null);
+      }
+    }
+  };
+  return Element;
+}
+
+function elementObjectById(ids, holder) {
+  ids.forEach(eid => {
+    const holderObj = holder;
+    const elem1 = document.getElementById(eid);
+    const newElem = elementDelegator();
+    newElem.init(eid, elem1);
+    holderObj.subscribe(newElem);
+  });
+}
+
+// ======================================================================
 // Event Controller
 // ======================================================================
 
@@ -377,6 +421,7 @@ function EventDelegator() {
 function getTargetId(e, tags) {
   // Returns the target Id of event for allowed tags
   //    Prevents events on the parent
+  //    Returns False if no target match
   if (e.target !== e.currentTarget) {
     if (tags.indexOf(e.target.tagName) > -1) {
       return e.target.id;
