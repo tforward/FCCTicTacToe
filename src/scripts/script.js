@@ -27,7 +27,18 @@ myApp.main = function main() {
   myApp.Elems.init();
 
   elementObjectById(
-    ["mainTitle", "scoreTitle", "scoreFrame", "playerScoreB", "aiScoreB", "playerTitle", "aiTitle"],
+    [
+      "mainTitle",
+      "scoreFrame",
+      "playerScoreB",
+      "aiScoreB",
+      "aiWins",
+      "aiLosses",
+      "playerWins",
+      "playerLosses",
+      "playerTied",
+      "aiTied"
+    ],
     myApp.Elems
   );
 
@@ -47,9 +58,33 @@ function initGame() {
   myApp.moves = [];
   myApp.count = 0;
 
+  myApp.lastGame = undefined;
+
   console.log("new");
 
-  // IM HERE SETTING THE TURN and waiting for player to enter value
+  let playerTurn = false;
+
+  // There are only 9 turns possible
+  for (let i = 0; i < 9; i += 1) {
+    const myTurn = selectTurn();
+    console.log(myTurn);
+  }
+
+  function selectTurn() {
+    let turn;
+    if (playerTurn) {
+      turn = true;
+    } else {
+      turn = false;
+    }
+    playerTurn = !playerTurn;
+    return turn;
+  }
+
+  // if (myApp.lastGame === undefined) {
+  // const bestMove = game(board, myApp.ai);
+  //   console.log(bestMove);
+  // }
 
   // const bestMove = game(board, myApp.player1);
 
@@ -58,19 +93,54 @@ function initGame() {
   // console.log(myApp.count);
 }
 
-myApp.initApplication = function init() {
-  myApp.main();
-};
+function turnAction(id) {
+  console.log(id);
+  // TODO I'm here
+  // Need to get the pos of the id in question
+}
 
 // ======================================================================
 // Events
 // ======================================================================
+
+function eventController(args, e) {
+  // Note: Function has access to this.elem via "this"
+  // "this" being what element the event sandbox is attached to and
+  // it's children.
+  // To know what button was pressed just use console.log(id).
+  // let {arg1, arg2, arg3} = args;
+  // args: comes from when the event was first init. It's not to be defined directly
+  //      ex: NOT LIKE eventController(args) "THIS WON'T WORK"
+
+  // Only Passes events of with tagNames defined in the array
+  const id = getTargetId(e, args.tags);
+
+  if (id) {
+    if (id.match(/(pickX|pickO)/)) {
+      selectChoice(id);
+    } else if (id.match(/(s1|s2|s3|s4|s5|s6|s7|s8|s9)/)) {
+      turnAction(id);
+    }
+  }
+
+  // Stop the event from going further up the DOM
+  e.stopPropagation();
+}
+
 function selectChoice(id) {
   const obs = myApp.subscribers.observers[id];
-  myApp.player1 = obs.elem.firstElementChild.textContent;
+  let choice;
+  const selected = obs.elem.id;
+  if (selected === "pickO") {
+    choice = "O";
+  } else {
+    choice = "X";
+  }
+
+  myApp.player1 = choice;
   myApp.ai = getAiLetter(myApp.player1);
-  scoreBoard();
   setVisiblity();
+  scoreBoard();
   initGame();
 }
 
@@ -89,8 +159,6 @@ function scoreBoard() {
   const spaces = document.querySelectorAll(".spaceStart");
 
   const elems = myApp.Elems.observers;
-
-  elems.scoreTitle.elem.className = "center fadeIn";
   elems.scoreFrame.elem.className = "visible";
 
   for (let i = 0; i < spaces.length; i += 1) {
@@ -100,16 +168,19 @@ function scoreBoard() {
   if (myApp.player1 === "X") {
     elems.playerScoreB.elem.className = "X scoreBoard";
     elems.aiScoreB.elem.className = "O scoreBoard";
-    elems.playerTitle.elem.textContent = "Player: 'X'";
-    elems.aiTitle.elem.textContent = "AI: 'O'";
   } else {
     elems.playerScoreB.elem.className = "O scoreBoard";
     elems.aiScoreB.elem.className = "X scoreBoard";
-    elems.playerTitle.elem.textContent = "Player: 'O'";
-    elems.aiTitle.elem.textContent = "AI: 'X'";
   }
-  elems.playerTitle.elem.className = "center visible fadeIn";
-  elems.aiTitle.elem.className = "center visible fadeIn";
+
+  const fadeIns = ["aiTitle", "aiWins", "aiLosses", "playerWins", "playerLosses", "playerTied", "aiTied"];
+  const elemKeys = Object.keys(elems);
+
+  fadeIns.forEach(toFade => {
+    if (elemKeys.includes(toFade)) {
+      elems[toFade].elem.className = "center visible fadeIn";
+    }
+  });
 }
 
 function setVisiblity() {
@@ -189,7 +260,6 @@ function checkWinType(states) {
 function game(newBoard, player) {
   const board = newBoard;
 
-  // console.log(board);
   const state = getBoardState(board);
 
   const score = minMaxState(isWin(state[0]), isWin(state[1]), state[2]);
@@ -315,28 +385,6 @@ function elementObjectById(ids, holder) {
 // ======================================================================
 // Event Controller
 // ======================================================================
-
-function eventController(args, e) {
-  // Note: Function has access to this.elem via "this"
-  // "this" being what element the event sandbox is attached to and
-  // it's children.
-  // To know what button was pressed just use console.log(id).
-  // let {arg1, arg2, arg3} = args;
-  // args: comes from when the event was first init. It's not to be defined directly
-  //      ex: NOT LIKE eventController(args) "THIS WON'T WORK"
-
-  // Only Passes events of with tagNames defined in the array
-  const id = getTargetId(e, args.tags);
-
-  if (id) {
-    if (id.match(/(pickX|pickO)/)) {
-      selectChoice(id);
-    }
-  }
-
-  // Stop the event from going further up the DOM
-  e.stopPropagation();
-}
 
 function btnEventDelegator() {
   // Here you can define properties that will be shared between all defined within
@@ -469,6 +517,10 @@ function EventObservers() {
   return Event;
 }
 // ======================================================================
+
+myApp.initApplication = function init() {
+  myApp.main();
+};
 
 // Handler when the DOM is fully loaded
 document.onreadystatechange = function onreadystatechange() {
