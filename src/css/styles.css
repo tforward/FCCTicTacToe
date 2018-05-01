@@ -29,10 +29,12 @@ html {
 
 .X{
     background-color: #FFA145;
+    color: #FFA145
 }
 
 .O{
     background-color: #A8D37C;
+    color: #A8D37C
 }
 
 .row {
@@ -41,34 +43,29 @@ html {
 }
 
 .spaceStart {
-    background-color: white;
-    height: 1em;
-    width: 1em;
+    height: 0.1em;
+    width: 0.1em;
     border: 0.5em solid white;
     border-radius: 0.1px;
-    color: white;
     cursor: pointer;
     outline: none;
     background-color: white;
 }
 
 .space {
-    background-color: black;
     height: 9em;
     width: 9em;
     border: 0.3em solid white;
     border-radius: 22px;
-    color: white;
     cursor: pointer;
     outline: none;
     transition: all 1.3s ease-in;
     -webkit-transition: all 1.3s ease-in; /* Safari */
 }
 
-#playerScoreB{
-}
-
-#aiScoreB{
+.spaceDefaultColour{
+    background-color: black;
+    color: white;
 }
 
 

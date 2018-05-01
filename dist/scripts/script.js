@@ -54,7 +54,7 @@ function initGame() {
   // [“O”,1 ,”X”,”X”,4 ,”X”, 6 ,”O”,”O”];
   const newBoard = [["na", "na", "na"], ["na", "na", "na"], ["na", "na", "na"]];
 
-  const board = newBoard;
+  myApp.board = newBoard;
   myApp.moves = [];
   myApp.count = 0;
 
@@ -62,24 +62,13 @@ function initGame() {
 
   console.log("new");
 
-  let playerTurn = false;
+  myApp.playerTurn = false;
 
-  // There are only 9 turns possible
-  for (let i = 0; i < 9; i += 1) {
-    const myTurn = selectTurn();
-    console.log(myTurn);
-  }
+  // // There are only 9 turns possible
+  // for (let i = 0; i < 9; i += 1) {
+  //   const myTurn = selectTurn();
 
-  function selectTurn() {
-    let turn;
-    if (playerTurn) {
-      turn = true;
-    } else {
-      turn = false;
-    }
-    playerTurn = !playerTurn;
-    return turn;
-  }
+  //
 
   // if (myApp.lastGame === undefined) {
   // const bestMove = game(board, myApp.ai);
@@ -93,10 +82,47 @@ function initGame() {
   // console.log(myApp.count);
 }
 
+function selectTurn() {
+  let turn;
+  if (myApp.playerTurn) {
+    turn = myApp.player1;
+  } else {
+    turn = myApp.ai;
+  }
+  myApp.playerTurn = !myApp.playerTurn;
+  return turn;
+}
+
 function turnAction(id) {
-  console.log(id);
-  // TODO I'm here
-  // Need to get the pos of the id in question
+  const boardPositions = {
+    s1: [0, 0],
+    s2: [0, 1],
+    s3: [0, 2],
+    s4: [1, 0],
+    s5: [1, 1],
+    s6: [1, 2],
+    s7: [2, 0],
+    s8: [2, 1],
+    s9: [2, 2]
+  };
+
+  const marker = selectTurn();
+  const boardPos = boardPositions[id];
+  const space = myApp.board[boardPos[0]][[boardPos[1]]];
+
+  if (space === "na") {
+    // Add the marker to the position on the board
+    myApp.board[boardPos[0]][[boardPos[1]]] = marker;
+    myApp.subscribers.observers[id].add(marker);
+    // TODO I'm HERE working with the state of the win
+    gameCondition(myApp.board);
+  } else {
+    // reset the turn as move is invalid
+    selectTurn();
+  }
+
+  // console.log(myApp.board);
+  // console.log(space);
 }
 
 // ======================================================================
@@ -162,7 +188,7 @@ function scoreBoard() {
   elems.scoreFrame.elem.className = "visible";
 
   for (let i = 0; i < spaces.length; i += 1) {
-    spaces[i].className = "space center";
+    spaces[i].className = "space center spaceDefaultColour";
   }
 
   if (myApp.player1 === "X") {
@@ -255,6 +281,13 @@ function checkWinType(states) {
     return [true, "diaWin"];
   }
   return [false];
+}
+
+function gameCondition(theBoard) {
+  const board = theBoard;
+  const state = getBoardState(board);
+  const winner = [isWin(state[0]), isWin(state[1])];
+  console.log(winner);
 }
 
 function game(newBoard, player) {
@@ -404,10 +437,9 @@ function btnEventDelegator() {
         this[propName] = Object.create(null);
       }
     },
-    add(num, data) {
-      this.count += num;
-      this.elem.textContent = this.count;
-      this.data = data;
+    add(marker) {
+      this.elem.textContent = marker;
+      this.elem.className = `space center ${marker}`;
     },
     clear() {
       this.elem.textContent = "";
