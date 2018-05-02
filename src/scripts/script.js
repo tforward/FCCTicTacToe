@@ -94,35 +94,76 @@ function selectTurn() {
 }
 
 function turnAction(id) {
-  const boardPositions = {
-    s1: [0, 0],
-    s2: [0, 1],
-    s3: [0, 2],
-    s4: [1, 0],
-    s5: [1, 1],
-    s6: [1, 2],
-    s7: [2, 0],
-    s8: [2, 1],
-    s9: [2, 2]
-  };
+  // As long as the observer exists
+  if (myApp.subscribers.observers[id]) {
+    const boardPositions = {
+      s1: [0, 0],
+      s2: [0, 1],
+      s3: [0, 2],
+      s4: [1, 0],
+      s5: [1, 1],
+      s6: [1, 2],
+      s7: [2, 0],
+      s8: [2, 1],
+      s9: [2, 2]
+    };
 
-  const marker = selectTurn();
-  const boardPos = boardPositions[id];
-  const space = myApp.board[boardPos[0]][[boardPos[1]]];
+    const marker = selectTurn();
+    // Will have part that selects the AI turns here
 
-  if (space === "na") {
+    const boardPos = boardPositions[id];
+    const space = myApp.board[boardPos[0]][[boardPos[1]]];
+
     // Add the marker to the position on the board
     myApp.board[boardPos[0]][[boardPos[1]]] = marker;
     myApp.subscribers.observers[id].add(marker);
-    // TODO I'm HERE working with the state of the win
-    gameCondition(myApp.board);
-  } else {
-    // reset the turn as move is invalid
-    selectTurn();
-  }
+    // Remove the space so cannot be clicked again
+    myApp.subscribers.unsubscribe(id);
+    // TODO REFACTOR THIS PART THE FUNCTIONS ARE ALMOST THE SAME
+    const gameResult = isGameWin();
+    const result = whoWins(gameResult);
+    if (result) gameOver(result);
 
-  // console.log(myApp.board);
-  // console.log(space);
+    // console.log(myApp.board);
+    // console.log(space);
+  }
+}
+
+function gameOver(result) {
+  console.log("gameOver", result);
+
+  // Unsubscribe all spaces
+  const keys = Object.keys(myApp.subscribers.observers);
+  myApp.subscribers.unsubscribe(keys);
+
+  // Reset Game?
+}
+
+function isGameWin() {
+  const condition = gameCondition(myApp.board);
+  // X wins
+  if (condition[0][0] === true) {
+    return ["X", condition[0][1]];
+    // O wins
+  } else if (condition[1][0] === true) {
+    return ["O", condition[1][1]];
+  } else if (condition[2].length === 0) {
+    return ["Tie", "Tie"];
+  }
+  return false;
+}
+
+function whoWins(result) {
+  if (result) {
+    if (result[0] === myApp.player1) {
+      return [`Player: ${myApp.player1}`, result[1]];
+    } else if (result[0] === myApp.ai) {
+      return [`AI: ${myApp.ai}`, result[1]];
+    } else if (result[0] === "Tie") {
+      return ["Tie", "Tie"];
+    }
+  }
+  return false;
 }
 
 // ======================================================================
@@ -191,13 +232,8 @@ function scoreBoard() {
     spaces[i].className = "space center spaceDefaultColour";
   }
 
-  if (myApp.player1 === "X") {
-    elems.playerScoreB.elem.className = "X scoreBoard";
-    elems.aiScoreB.elem.className = "O scoreBoard";
-  } else {
-    elems.playerScoreB.elem.className = "O scoreBoard";
-    elems.aiScoreB.elem.className = "X scoreBoard";
-  }
+  elems.playerScoreB.elem.className = "X scoreBoard";
+  elems.aiScoreB.elem.className = "O scoreBoard";
 
   const fadeIns = ["aiTitle", "aiWins", "aiLosses", "playerWins", "playerLosses", "playerTied", "aiTied"];
   const elemKeys = Object.keys(elems);
@@ -248,9 +284,9 @@ function getBoardState(board) {
 function diagonalWin(diagonals) {
   const middleExists = diagonals.indexOf("11") !== -1;
   if (middleExists) {
-    if (diagonals.indexOf("00") !== -1 && diagonals.indexOf("22")) {
+    if (diagonals.indexOf("00") !== -1 && diagonals.indexOf("22") !== -1) {
       return true;
-    } else if (diagonals.indexOf("20") !== -1 && diagonals.indexOf("02")) {
+    } else if (diagonals.indexOf("20") !== -1 && diagonals.indexOf("02") !== -1) {
       return true;
     }
   }
@@ -286,8 +322,8 @@ function checkWinType(states) {
 function gameCondition(theBoard) {
   const board = theBoard;
   const state = getBoardState(board);
-  const winner = [isWin(state[0]), isWin(state[1])];
-  console.log(winner);
+  const condition = [isWin(state[0]), isWin(state[1]), state[2]];
+  return condition;
 }
 
 function game(newBoard, player) {
@@ -530,9 +566,11 @@ function EventObservers() {
     this.observers[observer.id] = observer;
   };
   Event.unsubscribe = function unsubscribe(observer) {
-    const i = this.observers.indexOf(observer);
-    if (i > -1) {
-      this.observers.splice(i, 1);
+    // Can unsubscribe one observer, or an array of observers
+    if (typeof observer === "string") {
+      delete this.observers[observer];
+    } else {
+      observer.forEach(key => delete this.observers[key]);
     }
   };
   Event.inform = function inform(id, func, args) {
