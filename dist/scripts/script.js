@@ -13,6 +13,8 @@ myApp.main = function main() {
   // Any elements insdie the Event sandbox will be passed to the EventDelegator
   const eventSandbox = EventDelegator();
 
+  myApp.count = 0;
+
   const eventSandbox1 = document.getElementById("eventSandbox1");
   eventSandbox.initEvent(eventSandbox1, "click", { tags: ["BUTTON"] });
 
@@ -116,10 +118,17 @@ function turnAction(id) {
 
     // Add the marker to the position on the board
     myApp.board[boardPos[0]][[boardPos[1]]] = marker;
+
+    if (marker === myApp.ai) {
+      const bestMove = game(myApp.board, myApp.ai);
+      console.log("Out BESTMOVE", bestMove);
+      // marker = selectTurn();
+    }
     myApp.subscribers.observers[id].add(marker);
+
     // Remove the space so cannot be clicked again
     myApp.subscribers.unsubscribe(id);
-    // TODO REFACTOR THIS PART THE FUNCTIONS ARE ALMOST THE SAME
+
     const gameResult = isGameWin();
     const result = whoWins(gameResult);
     if (result) gameOver(result);
@@ -333,29 +342,45 @@ function game(newBoard, player) {
 
   const score = minMaxState(isWin(state[0]), isWin(state[1]), state[2]);
 
+  if (myApp.count === 20) {
+    console.log("return");
+    return;
+  }
+  myApp.count += 1;
+
+  console.log("score", score);
   // Short-circuit the funtion
   if (score !== undefined) {
+    console.log("scorenot", score);
     return score;
   }
-  const move = {};
+  let bestMove;
+  console.log("BEST", bestMove);
+
+  const moves = [];
 
   state[2].forEach(pos => {
+    const move = {};
     move.index = [pos[0], pos[1]];
     const reset = board[pos[0]][pos[1]];
     board[pos[0]][pos[1]] = player;
+    console.log(board);
+    console.log(state[2]);
 
     if (player === myApp.ai) {
       const result = game(board, myApp.player1);
       move.score = result.score;
-    } else {
-      const result = game(board, myApp.ai);
-      move.score = result.score;
+    } else if (player === myApp.player1) {
+      const resultPlayer = game(board, myApp.ai);
+      move.score = resultPlayer.score;
     }
-
     board[pos[0]][pos[1]] = reset;
-    myApp.moves.push([move]);
+    moves.push([move]);
   });
-  const bestMove = getBestMove(myApp.moves, player);
+  bestMove = getBestMove(moves, player);
+  console.log("Round", myApp.count);
+  console.log("BestMove", bestMove);
+
   return bestMove;
 }
 
