@@ -335,49 +335,97 @@ function gameCondition(theBoard) {
   return condition;
 }
 
-function game(newBoard, player) {
-  const board = newBoard;
+function game(board, player) {
+  // TRY THIS
+  // https://codepen.io/arielger/pen/NdQNor?editors=0010
+  const state = gameCondition(board);
 
-  const state = getBoardState(board);
+  const positions = state[2];
 
-  const score = minMaxState(isWin(state[0]), isWin(state[1]), state[2]);
-
-  if (myApp.count === 20) {
-    console.log("return");
-    return;
+  if (state[0][0]) {
+    return { score: -10 };
+  } else if (state[1][0]) {
+    return { score: 10 };
+  } else if (state[2].length === 0) {
+    return { score: 0 };
   }
-  myApp.count += 1;
-
-  console.log("score", score);
-  // Short-circuit the funtion
-  if (score !== undefined) {
-    console.log("scorenot", score);
-    return score;
-  }
-  let bestMove;
-  console.log("BEST", bestMove);
 
   const moves = [];
 
-  state[2].forEach(pos => {
-    const move = {};
-    move.index = [pos[0], pos[1]];
-    const reset = board[pos[0]][pos[1]];
-    board[pos[0]][pos[1]] = player;
-    console.log(board);
-    console.log(state[2]);
+  for (let i = 0; i < positions.length; i += 1) {
+    let result;
+    let move;
+    move = {};
 
+    move.index = positions[i];
+    const reset = board[positions[0][0]][positions[0][1]];
+    board[positions[0][0]][positions[0][1]] = player;
     if (player === myApp.ai) {
-      const result = game(board, myApp.player1);
+      result = game(board, myApp.player1);
+      console.log("MUST1", result);
       move.score = result.score;
     } else if (player === myApp.player1) {
-      const resultPlayer = game(board, myApp.ai);
-      move.score = resultPlayer.score;
+      console.log("PLayer");
+      result = game(board, myApp.ai);
+      console.log("MUST2", result);
+      move.score = result.score;
     }
-    board[pos[0]][pos[1]] = reset;
-    moves.push([move]);
-  });
-  bestMove = getBestMove(moves, player);
+    board[positions[0][0]][positions[0][1]] = reset;
+    console.log(move);
+    moves.push(move);
+  }
+
+  // emptySpaces.forEach(pos => {
+  //   const move = {};
+  //   move.index = [pos[0], pos[1]];
+
+  //   const reset = board[pos[0]][pos[1]];
+  //   board[pos[0]][pos[1]] = player;
+
+  //   console.log(player);
+  //   if (player === myApp.ai) {
+  //     const result = game(board, myApp.player1);
+  //     console.log(result);
+  //     move.score = result.score;
+  //   } else if (player === myApp.player1) {
+  //     const result = game(board, myApp.ai);
+  //     move.score = result.score;
+  //   }
+  //   board[pos[0]][pos[1]] = reset;
+  //   moves.push([move]);
+  // });
+
+  // if (myApp.count === 20) {
+  //   console.log("return");
+  //   return "test";
+  // }
+
+  //
+
+  // console.log(state[2].length);
+
+  // myApp.count += 1;
+  // // const bestMove = getBestMove(moves, player);
+  let bestMove;
+  if (player === myApp.ai) {
+    let bestScore = -10000;
+
+    for (let i = 0; i < moves.length; i += 1) {
+      if (moves[i].score > bestScore) {
+        bestScore = moves[i].score;
+        bestMove = moves[i].index;
+      }
+    }
+  } else {
+    let bestScore = 10000;
+
+    for (let i = 0; i < moves.length; i += 1) {
+      if (moves[i].score < bestScore) {
+        bestScore = moves[i].score;
+        bestMove = moves[i].index;
+      }
+    }
+  }
   console.log("Round", myApp.count);
   console.log("BestMove", bestMove);
 
