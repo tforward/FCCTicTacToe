@@ -64,7 +64,7 @@ function initGame() {
 
   console.log("new");
 
-  myApp.playerTurn = false;
+  myApp.playerTurn = true;
 
   // // There are only 9 turns possible
   // for (let i = 0; i < 9; i += 1) {
@@ -96,8 +96,10 @@ function selectTurn() {
 }
 
 function turnAction(id) {
+  let elemId = id;
+
   // As long as the observer exists
-  if (myApp.subscribers.observers[id]) {
+  if (myApp.subscribers.observers[elemId]) {
     const boardPositions = {
       s1: [0, 0],
       s2: [0, 1],
@@ -110,31 +112,32 @@ function turnAction(id) {
       s9: [2, 2]
     };
 
+    const boardId = [["s1", "s2", "s3"], ["s4", "s5", "s6"], ["s7", "s8", "s9"]];
+
     const marker = selectTurn();
-    // Will have part that selects the AI turns here
-
-    const boardPos = boardPositions[id];
-    const space = myApp.board[boardPos[0]][[boardPos[1]]];
-
-    // Add the marker to the position on the board
-    myApp.board[boardPos[0]][[boardPos[1]]] = marker;
 
     if (marker === myApp.ai) {
       const bestMove = game(myApp.board, myApp.ai);
       console.log("Out BESTMOVE", bestMove);
-      // marker = selectTurn();
+      const pos = bestMove.index;
+      myApp.board[pos[0]][[pos[1]]] = marker;
+      elemId = boardId[pos[0]][[pos[1]]];
+      console.log("Elem", elemId);
+    } else {
+      const boardPos = boardPositions[id];
+      myApp.board[boardPos[0]][[boardPos[1]]] = marker;
     }
-    myApp.subscribers.observers[id].add(marker);
+
+    myApp.subscribers.observers[elemId].add(marker);
 
     // Remove the space so cannot be clicked again
-    myApp.subscribers.unsubscribe(id);
+    myApp.subscribers.unsubscribe(elemId);
 
     const gameResult = isGameWin();
     const result = whoWins(gameResult);
     if (result) gameOver(result);
 
-    // console.log(myApp.board);
-    // console.log(space);
+    console.log(myApp.board);
   }
 }
 
@@ -335,77 +338,59 @@ function gameCondition(theBoard) {
   return condition;
 }
 
-function game(board, player) {
-  // TRY THIS
-  // https://codepen.io/arielger/pen/NdQNor?editors=0010
+function game(newBoard, player) {
+  const board = newBoard;
   const state = gameCondition(board);
 
   const positions = state[2];
+  const XWins = state[0][0];
+  const OWins = state[1][0];
 
-  if (state[0][0]) {
-    return { score: -10 };
-  } else if (state[1][0]) {
-    return { score: 10 };
-  } else if (state[2].length === 0) {
-    return { score: 0 };
+  let playerWins;
+  let aiWins;
+
+  if (myApp.player1 === "O") {
+    playerWins = OWins;
+    aiWins = XWins;
+  } else {
+    playerWins = XWins;
+    aiWins = OWins;
   }
 
+  const gameScore = minMaxState(playerWins, aiWins, positions);
+
+  if (gameScore) {
+    return gameScore;
+  }
+
+  let result;
   const moves = [];
 
   for (let i = 0; i < positions.length; i += 1) {
-    let result;
-    let move;
-    move = {};
-
+    const move = {};
     move.index = positions[i];
-    const reset = board[positions[0][0]][positions[0][1]];
-    board[positions[0][0]][positions[0][1]] = player;
+    const resetValue = board[positions[i][0]][positions[i][1]];
+    board[positions[i][0]][positions[i][1]] = player;
     if (player === myApp.ai) {
       result = game(board, myApp.player1);
-      console.log("MUST1", result);
-      move.score = result.score;
+      if (result) {
+        move.score = result.score;
+      }
     } else if (player === myApp.player1) {
-      console.log("PLayer");
       result = game(board, myApp.ai);
-      console.log("MUST2", result);
-      move.score = result.score;
+      if (result) {
+        move.score = result.score;
+      }
     }
-    board[positions[0][0]][positions[0][1]] = reset;
-    console.log(move);
+    board[positions[i][0]][positions[i][1]] = resetValue;
     moves.push(move);
   }
 
-  // emptySpaces.forEach(pos => {
-  //   const move = {};
-  //   move.index = [pos[0], pos[1]];
+  const bestMove = getBestMove(moves, player);
+  return bestMove;
+}
 
-  //   const reset = board[pos[0]][pos[1]];
-  //   board[pos[0]][pos[1]] = player;
-
-  //   console.log(player);
-  //   if (player === myApp.ai) {
-  //     const result = game(board, myApp.player1);
-  //     console.log(result);
-  //     move.score = result.score;
-  //   } else if (player === myApp.player1) {
-  //     const result = game(board, myApp.ai);
-  //     move.score = result.score;
-  //   }
-  //   board[pos[0]][pos[1]] = reset;
-  //   moves.push([move]);
-  // });
-
-  // if (myApp.count === 20) {
-  //   console.log("return");
-  //   return "test";
-  // }
-
-  //
-
-  // console.log(state[2].length);
-
-  // myApp.count += 1;
-  // // const bestMove = getBestMove(moves, player);
+function getBestMove(moves, player) {
   let bestMove;
   if (player === myApp.ai) {
     let bestScore = -10000;
@@ -413,7 +398,7 @@ function game(board, player) {
     for (let i = 0; i < moves.length; i += 1) {
       if (moves[i].score > bestScore) {
         bestScore = moves[i].score;
-        bestMove = moves[i].index;
+        bestMove = i;
       }
     }
   } else {
@@ -422,44 +407,19 @@ function game(board, player) {
     for (let i = 0; i < moves.length; i += 1) {
       if (moves[i].score < bestScore) {
         bestScore = moves[i].score;
-        bestMove = moves[i].index;
+        bestMove = i;
       }
     }
   }
-  console.log("Round", myApp.count);
-  console.log("BestMove", bestMove);
-
-  return bestMove;
+  return moves[bestMove];
 }
 
-function getBestMove(moves, player) {
-  let bestScore = -10000;
-  let bestMove = null;
-  if (player === myApp.player1) {
-    moves.forEach(move => {
-      if (move[0].score > bestScore) {
-        bestScore = move[0].score;
-        bestMove = move[0].index;
-      }
-    });
-  } else {
-    bestScore = 10000;
-    moves.forEach(move => {
-      if (move[0].score < bestScore) {
-        bestScore = move[0].score;
-        bestMove = move[0].index;
-      }
-    });
-  }
-  return bestMove;
-}
-
-function minMaxState(player1Wins, player2Wins, nullState) {
-  if (player1Wins[0]) {
+function minMaxState(player1Wins, player2Wins, positions) {
+  if (player1Wins) {
     return { score: -10 };
-  } else if (player2Wins[0]) {
+  } else if (player2Wins) {
     return { score: 10 };
-  } else if (nullState.length === 0) {
+  } else if (positions.length === 0) {
     return { score: 0 };
   }
   return undefined;
