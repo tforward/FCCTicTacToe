@@ -53,7 +53,6 @@ myApp.main = function main() {
 // ======================================================================
 
 function initGame() {
-  // [“O”,1 ,”X”,”X”,4 ,”X”, 6 ,”O”,”O”];
   const newBoard = [["na", "na", "na"], ["na", "na", "na"], ["na", "na", "na"]];
 
   myApp.board = newBoard;
@@ -61,27 +60,7 @@ function initGame() {
   myApp.count = 0;
 
   myApp.lastGame = undefined;
-
-  console.log("new");
-
   myApp.playerTurn = true;
-
-  // // There are only 9 turns possible
-  // for (let i = 0; i < 9; i += 1) {
-  //   const myTurn = selectTurn();
-
-  //
-
-  // if (myApp.lastGame === undefined) {
-  // const bestMove = game(board, myApp.ai);
-  //   console.log(bestMove);
-  // }
-
-  // const bestMove = game(board, myApp.player1);
-
-  // console.log(bestMove);
-
-  // console.log(myApp.count);
 }
 
 function selectTurn() {
@@ -97,47 +76,43 @@ function selectTurn() {
 
 function turnAction(id) {
   let elemId = id;
+  const boardPositions = {
+    s1: [0, 0],
+    s2: [0, 1],
+    s3: [0, 2],
+    s4: [1, 0],
+    s5: [1, 1],
+    s6: [1, 2],
+    s7: [2, 0],
+    s8: [2, 1],
+    s9: [2, 2]
+  };
 
-  // As long as the observer exists
-  if (myApp.subscribers.observers[elemId]) {
-    const boardPositions = {
-      s1: [0, 0],
-      s2: [0, 1],
-      s3: [0, 2],
-      s4: [1, 0],
-      s5: [1, 1],
-      s6: [1, 2],
-      s7: [2, 0],
-      s8: [2, 1],
-      s9: [2, 2]
-    };
+  const boardId = [["s1", "s2", "s3"], ["s4", "s5", "s6"], ["s7", "s8", "s9"]];
 
-    const boardId = [["s1", "s2", "s3"], ["s4", "s5", "s6"], ["s7", "s8", "s9"]];
+  const marker = selectTurn();
 
-    const marker = selectTurn();
+  if (marker === myApp.ai) {
+    const bestMove = game(myApp.board, myApp.ai);
+    const pos = bestMove.index;
+    myApp.board[pos[0]][[pos[1]]] = marker;
+    elemId = boardId[pos[0]][[pos[1]]];
+  } else {
+    const boardPos = boardPositions[id];
+    myApp.board[boardPos[0]][[boardPos[1]]] = marker;
+  }
 
-    if (marker === myApp.ai) {
-      const bestMove = game(myApp.board, myApp.ai);
-      console.log("Out BESTMOVE", bestMove);
-      const pos = bestMove.index;
-      myApp.board[pos[0]][[pos[1]]] = marker;
-      elemId = boardId[pos[0]][[pos[1]]];
-      console.log("Elem", elemId);
-    } else {
-      const boardPos = boardPositions[id];
-      myApp.board[boardPos[0]][[boardPos[1]]] = marker;
-    }
+  myApp.subscribers.observers[elemId].add(marker);
 
-    myApp.subscribers.observers[elemId].add(marker);
+  // Remove the space so cannot be clicked again
+  myApp.subscribers.unsubscribe(elemId);
 
-    // Remove the space so cannot be clicked again
-    myApp.subscribers.unsubscribe(elemId);
-
-    const gameResult = isGameWin();
-    const result = whoWins(gameResult);
-    if (result) gameOver(result);
-
-    console.log(myApp.board);
+  const gameResult = isGameWin();
+  const result = whoWins(gameResult);
+  if (result) gameOver(result);
+  // Trigger the AI to play
+  else if (marker === myApp.player1) {
+    turnAction(undefined);
   }
 }
 
@@ -160,7 +135,7 @@ function isGameWin() {
   } else if (condition[1][0] === true) {
     return ["O", condition[1][1]];
   } else if (condition[2].length === 0) {
-    return ["Tie", "Tie"];
+    return ["Tie"];
   }
   return false;
 }
@@ -168,11 +143,11 @@ function isGameWin() {
 function whoWins(result) {
   if (result) {
     if (result[0] === myApp.player1) {
-      return [`Player: ${myApp.player1}`, result[1]];
+      return ["Player", myApp.player1, result[1]];
     } else if (result[0] === myApp.ai) {
-      return [`AI: ${myApp.ai}`, result[1]];
+      return ["AI", myApp.ai, result[1]];
     } else if (result[0] === "Tie") {
-      return ["Tie", "Tie"];
+      return ["Tie"];
     }
   }
   return false;
@@ -198,7 +173,9 @@ function eventController(args, e) {
     if (id.match(/(pickX|pickO)/)) {
       selectChoice(id);
     } else if (id.match(/(s1|s2|s3|s4|s5|s6|s7|s8|s9)/)) {
-      turnAction(id);
+      if (myApp.subscribers.observers[id]) {
+        turnAction(id);
+      }
     }
   }
 
@@ -385,7 +362,6 @@ function game(newBoard, player) {
     board[positions[i][0]][positions[i][1]] = resetValue;
     moves.push(move);
   }
-
   const bestMove = getBestMove(moves, player);
   return bestMove;
 }
@@ -507,11 +483,9 @@ function btnEventDelegator() {
       }
     },
     add(marker) {
-      this.elem.textContent = marker;
       this.elem.className = `space center ${marker}`;
     },
     clear() {
-      this.elem.textContent = "";
       this.count = 0;
     }
   };
