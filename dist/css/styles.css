@@ -88,6 +88,23 @@ scoreBoardStart {
     -webkit-transition: all 1.3s ease-in;
 }
 
+.scoreBoardTest{
+    color: white;
+    width: 12em;
+    height: 12em;
+    border-radius: 22px;
+    border: 0.3em solid white;
+    padding: 0em 0.7em;
+    transition: all 1.3s ease-in;
+    -webkit-transition: all 1.3s ease-in;
+}
+
+.black {
+    background-color: black;
+}
+
+
+
 .notVisible{
    display: none;
 }

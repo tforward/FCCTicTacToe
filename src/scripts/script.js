@@ -8,70 +8,116 @@ const myApp = Object.create(null);
 // App
 // ======================================================================
 
-myApp.main = function main() {
+myApp.initApplication = function init() {
   // Creates an isolated event sandbox around a element
-  // Any elements insdie the Event sandbox will be passed to the EventDelegator
+  // Any elements inside the Event sandbox will be passed to the EventDelegator
   const eventSandbox = EventDelegator();
-
-  myApp.count = 0;
-
-  const eventSandbox1 = document.getElementById("eventSandbox1");
-  eventSandbox.initEvent(eventSandbox1, "click", { tags: ["BUTTON"] });
+  const eventSandboxElem = document.getElementById("eventSandbox1");
+  // Events are only triggered on defined tags
+  eventSandbox.initEvent(eventSandboxElem, "click", { tags: ["BUTTON"] });
 
   // Create a event Observer
-  myApp.subscribers = EventObservers();
+  myApp.subscribers = SubscribersDelegator();
   myApp.subscribers.init();
 
-  createObserversById(["s1", "s2", "s3", "s4", "s5", "s6", "s7", "s8", "s9", "pickX", "pickO"]);
-
-  // Elements with no Events on them
-  myApp.Elems = EventObservers();
+  myApp.Elems = SubscribersDelegator();
   myApp.Elems.init();
 
-  elementObjectById(
-    [
-      "mainTitle",
-      "scoreFrame",
-      "playerScoreB",
-      "aiScoreB",
-      "aiWins",
-      "aiLosses",
-      "playerWins",
-      "playerLosses",
-      "playerTied",
-      "aiTied"
-    ],
-    myApp.Elems
+  myApp.ScoreBoard = SubscribersDelegator();
+  myApp.ScoreBoard.init();
+
+  createObserversById(["Wins", "Losses", "Tied"], ScoreBoardDelegator, myApp.ScoreBoard);
+
+  // You can change out the Delegator used if needed
+  // Elements part of the same delegator share the same properites
+  createObserversById(["mainTitle", "scoreFrame", "scoreB", "Wins", "Losses", "Tied"], ElementDelegator, myApp.Elems);
+
+  createObserversById(
+    ["s1", "s2", "s3", "s4", "s5", "s6", "s7", "s8", "s9", "pickX", "pickO"],
+    btnEventDelegator,
+    myApp.subscribers
   );
 
-  // Handles all events within the Event sandbox
+  // Add the event to the event sandbox area
+  // EventController Handles all events within the Event sandbox
   eventSandbox.addEvent(eventController);
 };
 
 // ======================================================================
-// Events
+// Game
 // ======================================================================
+
+function selectChoice(id) {
+  const obs = myApp.subscribers.observers[id];
+  let choice;
+  const selected = obs.elem.id;
+  if (selected === "pickO") {
+    choice = "O";
+  } else {
+    choice = "X";
+  }
+
+  myApp.score = { wins: 0, losses: 0, tied: 0 };
+  myApp.player1 = choice;
+  myApp.ai = getOppositeMarker(myApp.player1);
+  setVisiblity();
+  scoreBoard();
+  initGame();
+}
+
+function getOppositeMarker(input) {
+  if (input === "X") {
+    return "O";
+  }
+  return "X";
+}
+
+function setVisiblity() {
+  const frame = document.getElementById("frame");
+  const board = document.getElementById("board");
+  const menu = document.getElementById("menu");
+  frame.className = "visible";
+  board.className = "visible";
+  menu.className = "notVisible";
+}
+
+function resetSpaces(selector) {
+  const spaces = document.querySelectorAll(selector);
+
+  for (let i = 0; i < spaces.length; i += 1) {
+    spaces[i].className = "space center spaceDefaultColour";
+  }
+}
+
+function scoreBoard() {
+  const elems = myApp.Elems.observers;
+  elems.scoreFrame.elem.className = "visible";
+
+  resetSpaces(".spaceStart");
+
+  elems.scoreB.elem.className = `${myApp.player1} scoreBoard`;
+
+  const fadeIns = ["aiTitle", "Wins", "Losses", "Tied"];
+  const elemKeys = Object.keys(elems);
+
+  fadeIns.forEach(toFade => {
+    if (elemKeys.includes(toFade)) {
+      elems[toFade].elem.className = "center visible fadeIn";
+    }
+  });
+}
 
 function initGame() {
   const newBoard = [["na", "na", "na"], ["na", "na", "na"], ["na", "na", "na"]];
 
   myApp.board = newBoard;
   myApp.moves = [];
-  myApp.count = 0;
 
-  myApp.lastGame = undefined;
   myApp.playerTurn = true;
-}
 
-function selectTurn() {
-  let turn;
-  if (myApp.playerTurn) {
-    turn = myApp.player1;
-  } else {
-    turn = myApp.ai;
-  }
-  myApp.playerTurn = !myApp.playerTurn;
-  return turn;
+  resetSpaces(".space");
+
+  myApp.unregistered = [];
 }
 
 function turnAction(id) {
@@ -105,7 +151,7 @@ function turnAction(id) {
   myApp.subscribers.observers[elemId].add(marker);
 
   // Remove the space so cannot be clicked again
-  myApp.subscribers.unsubscribe(elemId);
+  myApp.unregistered.push(elemId);
 
   const gameResult = isGameWin();
   const result = whoWins(gameResult);
@@ -117,13 +163,35 @@ function turnAction(id) {
 }
 
 function gameOver(result) {
-  console.log("gameOver", result);
-
   // Unsubscribe all spaces
   const keys = Object.keys(myApp.subscribers.observers);
-  myApp.subscribers.unsubscribe(keys);
 
-  // Reset Game?
+  keys.forEach(key => myApp.unregistered.push(key));
+
+  tallyScores(result);
+  displayScores();
+
+  // Reset Game
+  setTimeout(() => {
+    initGame();
+  }, 2500);
+}
+
+function displayScores() {
+  const sBoard = myApp.ScoreBoard.observers;
+  sBoard.Wins.elem.textContent = `Wins: ${myApp.score.wins}`;
+  sBoard.Losses.elem.textContent = `Losses: ${myApp.score.losses}`;
+  sBoard.Tied.elem.textContent = `Tied: ${myApp.score.tied}`;
+}
+
+function tallyScores(result) {
+  if (result[0] === "Tie") {
+    myApp.score.tied += 1;
+  } else if (result[1] === myApp.player1) {
+    myApp.score.wins += 1;
+  } else {
+    myApp.score.losses += 1;
+  }
 }
 
 function isGameWin() {
@@ -153,166 +221,15 @@ function whoWins(result) {
   return false;
 }
 
-// ======================================================================
-// Events
-// ======================================================================
-
-function eventController(args, e) {
-  // Note: Function has access to this.elem via "this"
-  // "this" being what element the event sandbox is attached to and
-  // it's children.
-  // To know what button was pressed just use console.log(id).
-  // let {arg1, arg2, arg3} = args;
-  // args: comes from when the event was first init. It's not to be defined directly
-  //      ex: NOT LIKE eventController(args) "THIS WON'T WORK"
-
-  // Only Passes events of with tagNames defined in the array
-  const id = getTargetId(e, args.tags);
-
-  if (id) {
-    if (id.match(/(pickX|pickO)/)) {
-      selectChoice(id);
-    } else if (id.match(/(s1|s2|s3|s4|s5|s6|s7|s8|s9)/)) {
-      if (myApp.subscribers.observers[id]) {
-        turnAction(id);
-      }
-    }
-  }
-
-  // Stop the event from going further up the DOM
-  e.stopPropagation();
-}
-
-function selectChoice(id) {
-  const obs = myApp.subscribers.observers[id];
-  let choice;
-  const selected = obs.elem.id;
-  if (selected === "pickO") {
-    choice = "O";
+function selectTurn() {
+  let turn;
+  if (myApp.playerTurn) {
+    turn = myApp.player1;
   } else {
-    choice = "X";
+    turn = myApp.ai;
   }
-
-  myApp.player1 = choice;
-  myApp.ai = getAiLetter(myApp.player1);
-  setVisiblity();
-  scoreBoard();
-  initGame();
-}
-
-function createObserversById(ids) {
-  ids.forEach(_id => {
-    const elem1 = document.getElementById(_id);
-    btnEventObserver(_id, elem1, myApp.subscribers);
-  });
-}
-
-// ======================================================================
-// Tic Tac Toe
-// ======================================================================
-
-function scoreBoard() {
-  const spaces = document.querySelectorAll(".spaceStart");
-
-  const elems = myApp.Elems.observers;
-  elems.scoreFrame.elem.className = "visible";
-
-  for (let i = 0; i < spaces.length; i += 1) {
-    spaces[i].className = "space center spaceDefaultColour";
-  }
-
-  elems.playerScoreB.elem.className = "X scoreBoard";
-  elems.aiScoreB.elem.className = "O scoreBoard";
-
-  const fadeIns = ["aiTitle", "aiWins", "aiLosses", "playerWins", "playerLosses", "playerTied", "aiTied"];
-  const elemKeys = Object.keys(elems);
-
-  fadeIns.forEach(toFade => {
-    if (elemKeys.includes(toFade)) {
-      elems[toFade].elem.className = "center visible fadeIn";
-    }
-  });
-}
-
-function setVisiblity() {
-  const frame = document.getElementById("frame");
-  const board = document.getElementById("board");
-  const menu = document.getElementById("menu");
-  frame.className = "visible";
-  board.className = "visible";
-  menu.className = "notVisible";
-}
-
-function getAiLetter(input) {
-  if (input === "X") {
-    return "O";
-  }
-  return "X";
-}
-
-function getBoardState(board) {
-  const xPos = [];
-  const oPos = [];
-  const nullPos = [];
-
-  for (let id = 0; id < board.length; id += 1) {
-    const row = board[id];
-    for (let space = 0; space < row.length; space += 1) {
-      if (row[space] === "X") {
-        xPos.push([id, space]);
-      } else if (row[space] === "O") {
-        oPos.push([id, space]);
-      } else {
-        nullPos.push([id, space]);
-      }
-    }
-  }
-  return [xPos, oPos, nullPos];
-}
-
-function diagonalWin(diagonals) {
-  const middleExists = diagonals.indexOf("11") !== -1;
-  if (middleExists) {
-    if (diagonals.indexOf("00") !== -1 && diagonals.indexOf("22") !== -1) {
-      return true;
-    } else if (diagonals.indexOf("20") !== -1 && diagonals.indexOf("02") !== -1) {
-      return true;
-    }
-  }
-  return false;
-}
-
-function checkWin(dict) {
-  for (let i = 0; i < 3; i += 1) {
-    if (dict[i] !== undefined) {
-      if (dict[i].length === 3) {
-        return true;
-      }
-    }
-  }
-  return false;
-}
-
-function checkWinType(states) {
-  const rowWin = checkWin(states[0]);
-  const colWin = checkWin(states[1]);
-  const dwin = diagonalWin(states[2]);
-
-  if (rowWin === true) {
-    return [true, "rowWin"];
-  } else if (colWin === true) {
-    return [true, "colWin"];
-  } else if (dwin === true) {
-    return [true, "diaWin"];
-  }
-  return [false];
-}
-
-function gameCondition(theBoard) {
-  const board = theBoard;
-  const state = getBoardState(board);
-  const condition = [isWin(state[0]), isWin(state[1]), state[2]];
-  return condition;
+  myApp.playerTurn = !myApp.playerTurn;
+  return turn;
 }
 
 function game(newBoard, player) {
@@ -366,6 +283,33 @@ function game(newBoard, player) {
   return bestMove;
 }
 
+function gameCondition(theBoard) {
+  const board = theBoard;
+  const state = getBoardState(board);
+  const condition = [isWin(state[0]), isWin(state[1]), state[2]];
+  return condition;
+}
+
+function getBoardState(board) {
+  const xPos = [];
+  const oPos = [];
+  const nullPos = [];
+
+  for (let id = 0; id < board.length; id += 1) {
+    const row = board[id];
+    for (let space = 0; space < row.length; space += 1) {
+      if (row[space] === "X") {
+        xPos.push([id, space]);
+      } else if (row[space] === "O") {
+        oPos.push([id, space]);
+      } else {
+        nullPos.push([id, space]);
+      }
+    }
+  }
+  return [xPos, oPos, nullPos];
+}
+
 function getBestMove(moves, player) {
   let bestMove;
   if (player === myApp.ai) {
@@ -414,6 +358,96 @@ function isWin(state) {
   return checkWinType([rows, cols, diagonals]);
 }
 
+function checkWinType(states) {
+  const rowWin = checkWin(states[0]);
+  const colWin = checkWin(states[1]);
+  const dwin = diagonalWin(states[2]);
+
+  if (rowWin === true) {
+    return [true, "rowWin"];
+  } else if (colWin === true) {
+    return [true, "colWin"];
+  } else if (dwin === true) {
+    return [true, "diaWin"];
+  }
+  return [false];
+}
+
+function diagonalWin(diagonals) {
+  const middleExists = diagonals.indexOf("11") !== -1;
+  if (middleExists) {
+    if (diagonals.indexOf("00") !== -1 && diagonals.indexOf("22") !== -1) {
+      return true;
+    } else if (diagonals.indexOf("20") !== -1 && diagonals.indexOf("02") !== -1) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function checkWin(dict) {
+  for (let i = 0; i < 3; i += 1) {
+    if (dict[i] !== undefined) {
+      if (dict[i].length === 3) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+// ======================================================================
+//  Delegators
+//
+//      - Create new Delegators for elements that should operate similarly
+// ======================================================================
+
+function ElementDelegator() {
+  // Here you can define properties that will be shared between all defined within
+  // the subscription
+  // These can be accessed via the subscriptions or
+  // directly by calling myApp.subscribers.observers[id]
+  // which you can use dot notation on any property or method
+  const Element = {
+    init(elemId, elem) {
+      this.id = elemId;
+      this.elem = elem;
+    },
+    // Can add new properties on the fly
+    // But these will only apply to the "this" element and not all
+    // under the same delegator
+    newProp(propName) {
+      if (this[propName] === undefined) {
+        this[propName] = Object.create(null);
+      }
+    }
+  };
+  return Element;
+}
+
+function ScoreBoardDelegator() {
+  // Here you can define properties that will be shared between all defined within
+  // the subscription
+  // These can be accessed via the subscriptions or
+  // directly by calling myApp.subscribers.observers[id]
+  // which you can use dot notation on any property or method
+  const Element = {
+    init(elemId, elem) {
+      this.id = elemId;
+      this.elem = elem;
+    },
+    // Can add new properties on the fly
+    // But these will only apply to the "this" element and not all
+    // under the same delegator
+    newProp(propName) {
+      if (this[propName] === undefined) {
+        this[propName] = Object.create(null);
+      }
+    }
+  };
+  return Element;
+}
+
 // ======================================================================
 // Utilities
 // ======================================================================
@@ -429,39 +463,35 @@ function defaultDict(inputDict, i, values) {
 }
 
 // ======================================================================
-// Element Controller
+// Handle Events
 // ======================================================================
 
-function elementDelegator() {
-  // These can be accessed via the subscriptions or
-  // directly by calling myApp.subscribers.observers[id]
-  // which you can use dot notation on any property or method
-  const Element = {
-    init(btnId, elem) {
-      this.id = btnId;
-      this.elem = elem;
-    },
-    newProp(propName) {
-      if (this[propName] === undefined) {
-        this[propName] = Object.create(null);
+function eventController(args, e) {
+  // To know what button was pressed just use console.log(id).
+  // let {arg1, arg2, arg3} = args;
+  // args: comes from when the event was first init. It's not to be defined directly
+  //      ex: NOT LIKE eventController(args) "THIS WON'T WORK"
+  // It is defined where the EventDelegator was initialized
+  // You can access the event directly with "e", such as console.log(e.target)
+
+  // Only Passes events of with tagNames defined in the array
+  const id = getTargetId(e, args.tags);
+
+  if (id) {
+    if (id.match(/(pickX|pickO)/)) {
+      selectChoice(id);
+    } else if (id.match(/(s1|s2|s3|s4|s5|s6|s7|s8|s9)/)) {
+      if (myApp.unregistered.indexOf(id) === -1) {
+        turnAction(id);
       }
     }
-  };
-  return Element;
-}
-
-function elementObjectById(ids, holder) {
-  ids.forEach(eid => {
-    const holderObj = holder;
-    const elem1 = document.getElementById(eid);
-    const newElem = elementDelegator();
-    newElem.init(eid, elem1);
-    holderObj.subscribe(newElem);
-  });
+  }
+  // Stop the event from going further up the DOM
+  e.stopPropagation();
 }
 
 // ======================================================================
-// Event Controller
+// Delegators
 // ======================================================================
 
 function btnEventDelegator() {
@@ -493,15 +523,56 @@ function btnEventDelegator() {
 }
 
 // ======================================================================
+// Observer Pattern
+// ======================================================================
+
+function createObserversById(ids, delegator, holder) {
+  ids.forEach(elemId => {
+    const elem = document.getElementById(elemId);
+    const observer = delegator();
+    observer.init(elemId, elem);
+    holder.subscribe(observer);
+  });
+}
+
+function SubscribersDelegator() {
+  // Delegator
+  const Subscribe = Object.create(null);
+
+  Subscribe.init = function init() {
+    this.observers = Object.create(null);
+  };
+  Subscribe.subscribe = function subscribe(observer) {
+    this.observers[observer.id] = observer;
+  };
+  Subscribe.unsubscribe = function unsubscribe(observer) {
+    // Can unsubscribe one observer, or an array of observers
+    if (typeof observer === "string") {
+      delete this.observers[observer];
+    } else {
+      observer.forEach(key => delete this.observers[key]);
+    }
+  };
+  Subscribe.broadcast = function broadcast(func) {
+    // On each object called func
+    const keys = Object.keys(this.observers);
+    for (let i = 0; i < keys.length; i += 1) {
+      this.observers[keys[i]][func]();
+    }
+  };
+  return Subscribe;
+}
+
+// ======================================================================
 // Event Utilities
 // ======================================================================
 
 function createEvent() {
-  const CreateEvent = {
+  const Event = {
     setup: function init(elem, type, args) {
       // The Element to bind the event handler too
       this.elem = elem;
-      // The type of event
+      // The type of event ex: "Click"
       this.eventType = type;
       // Additional arguments that will be passed to the bound function as an object
       this.args = args;
@@ -514,19 +585,20 @@ function createEvent() {
       // func: Bound an Function to an Event
       // (options): Optional parameter for passing options to event listener ex: "once: true"
       this.boundFunc = func.bind(this.elem, this.args);
-      // this.bound prevents binding loss for options
+      // this.bound prevents binding loss for arguments and options
       this.boundOptions = options;
       this.elem.addEventListener(this.eventType, this.boundFunc, this.boundOptions);
     },
     removeListener: function removeListener() {
-      // Remove the listener, do not have to pass the options since it is bound
+      // Remove the listener, do not have to pass the "options" since it is bound
       this.elem.removeEventListener(this.eventType, this.boundFunc, this.boundOptions);
     }
   };
-  return CreateEvent;
+  return Event;
 }
 
 function EventDelegator() {
+  // Creates an Event object on the element
   const Event = Object.create(createEvent());
 
   Event.initEvent = function setup(elem, type, targetTags) {
@@ -542,69 +614,25 @@ function EventDelegator() {
 }
 
 function getTargetId(e, tags) {
-  // Returns the target Id of event for allowed tags
-  //    Prevents events on the parent
-  //    Returns False if no target match
+  // Prevents events triggering on the parent
   if (e.target !== e.currentTarget) {
+    // Returns the target Id of event for allowed tags
     if (tags.indexOf(e.target.tagName) > -1) {
+      e.stopPropagation();
       return e.target.id;
     }
   }
   e.stopPropagation();
+  // Returns false if no target match
   return false;
 }
-
-function btnEventObserver(btnId, elem, observers) {
-  // We just return true, because the observers holds the object
-  const observer = btnEventDelegator();
-  observer.init(btnId, elem);
-  observers.subscribe(observer);
-  return true;
-}
-
-function EventObservers() {
-  // Delegator
-  const Event = Object.create(null);
-
-  Event.init = function init() {
-    this.observers = Object.create(null);
-  };
-  Event.subscribe = function subscribe(observer) {
-    this.observers[observer.id] = observer;
-  };
-  Event.unsubscribe = function unsubscribe(observer) {
-    // Can unsubscribe one observer, or an array of observers
-    if (typeof observer === "string") {
-      delete this.observers[observer];
-    } else {
-      observer.forEach(key => delete this.observers[key]);
-    }
-  };
-  Event.inform = function inform(id, func, args) {
-    // Sent to only one observer
-    this.observers[id][func](id, args);
-  };
-  Event.broadcast = function broadcast(func) {
-    // On each object called func
-    const keys = Object.keys(this.observers);
-    for (let i = 0; i < keys.length; i += 1) {
-      this.observers[keys[i]][func]();
-    }
-  };
-  return Event;
-}
-// ======================================================================
-
-myApp.initApplication = function init() {
-  myApp.main();
-};
 
 // Handler when the DOM is fully loaded
 document.onreadystatechange = function onreadystatechange() {
   if (document.readyState === "complete") {
     myApp.initApplication(document.readyState);
   } else {
-    // Do something during loading [opitional]
+    // Do something during loading [optional]
   }
 };
 
